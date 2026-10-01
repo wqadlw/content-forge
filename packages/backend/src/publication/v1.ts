@@ -4,15 +4,18 @@ import type { PublicApiCategoryKey } from "@aihot/contracts/taxonomy";
 import { sql, type Db } from "../db.ts";
 import { decodeCursor, encodeCursor, InvalidCursorError, queryBinding } from "../lib/cursor.ts";
 import { newShortId } from "../lib/ids.ts";
-import { categoryCondition, API_ITEM_COLUMNS, API_ITEM_FROM, type ApiItemRow } from "./items.ts";
+import { categoryCondition, topicCondition, API_ITEM_COLUMNS, API_ITEM_FROM, type ApiItemRow } from "./items.ts";
 import { publicMatchCondition, searchTerms, withSearchCapacity } from "./pool.ts";
 import { v1Payload, type V1ItemPayload } from "./publish.ts";
+import { loadTopicTags } from "./topics.ts";
 
 export interface V1ItemsQuery {
   mode: "selected" | "all";
   window: "24h" | "7d";
   by: "timeline" | "published";
   category: PublicApiCategoryKey | null;
+  /** 批次 HS6b'：主题页过滤（topics.json 的 slug，如 busch/turbo-molecular——企业·产品维度）。 */
+  topic: string | null;
   q: string | null;
   limit: number;
   cursor: string | null;
@@ -49,10 +52,13 @@ export async function v1Items(query: V1ItemsQuery, now = new Date()): Promise<V1
   }
   const scope = query.mode === "selected" ? selectedCondition(now) : sql`${listedCondition(now)}`;
   const terms = query.q ? searchTerms(query.q) : [];
+  // 批次 HS6b'：topic slug → 主题标签组过滤（未知名显式拒绝，不静默放全量）
+  const topicTags = query.topic ? await loadTopicTags(query.topic) : null;
+  if (query.topic && !topicTags) throw new Error(`unknown topic: ${query.topic}`);
 
   const run = (db: Db) => db<(ApiItemRow & { sort_at: Date })[]>`
     SELECT ${API_ITEM_COLUMNS}, ${sortCol} AS sort_at ${API_ITEM_FROM}
-    WHERE ${scope} ${categoryCondition(query.category, true)} ${publicMatchCondition(terms)}
+    WHERE ${scope} ${categoryCondition(query.category, true)} ${topicCondition(topicTags)} ${publicMatchCondition(terms)}
       AND ${sortCol} >= ${windowStart} AND ${sortCol} <= ${now}
       ${after ? sql`AND (${sortCol}, p.article_id) < (${new Date(after.a)}, ${after.i})` : sql``}
     ORDER BY ${sortCol} DESC, p.article_id DESC

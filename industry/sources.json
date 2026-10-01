@@ -7,13 +7,17 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=%E7%9C%9F%E7%A9%BA%E6%B3%B5&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 60,
-      "tags": ["聚合"],
+      "tags": [
+        "聚合"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -23,13 +27,17 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=%E7%9C%9F%E7%A9%BA%E8%AE%BE%E5%A4%87&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 60,
-      "tags": ["聚合"],
+      "tags": [
+        "聚合"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -39,13 +47,17 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=%E5%B9%B2%E5%BC%8F%E7%9C%9F%E7%A9%BA%E6%B3%B5%20OR%20%E8%9E%BA%E6%9D%86%E7%9C%9F%E7%A9%BA%E6%B3%B5&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 90,
-      "tags": ["聚合"],
+      "tags": [
+        "聚合"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -55,13 +67,17 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=%E7%9C%9F%E7%A9%BA%E9%95%80%E8%86%9C&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 90,
-      "tags": ["聚合"],
+      "tags": [
+        "聚合"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -71,13 +87,17 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=%E6%B0%A6%E8%B4%A8%E8%B0%B1%E6%A3%80%E6%BC%8F&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 120,
-      "tags": ["聚合"],
+      "tags": [
+        "聚合"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -87,13 +107,18 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=%22vacuum%20pump%22&hl=en-US&gl=US&ceid=US:en",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 60,
-      "tags": ["聚合", "海外"],
+      "tags": [
+        "聚合",
+        "海外"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -103,13 +128,18 @@
       "kind": "rss",
       "config": {
         "feedUrl": "https://news.google.com/rss/search?q=semiconductor%20vacuum%20pump&hl=en-US&gl=US&ceid=US:en",
-        "_aihot": { "initialBackfillLimit": 10 }
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
       },
       "tier": "T2",
       "first_party": false,
-      "participation_mode": "editorial",
+      "participation_mode": "hot_signal",
       "interval_minutes": 120,
-      "tags": ["聚合", "海外"],
+      "tags": [
+        "聚合",
+        "海外"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -121,15 +151,22 @@
         "url": "http://127.0.0.1:8001/news",
         "itemSelector": "a[href^='/news/'][href$='.html']",
         "detail": true,
-        "allowUrlPrefixes": ["http://127.0.0.1:8001/news/"],
-        "_aihot": { "initialBackfillLimit": 8 }
+        "allowUrlPrefixes": [
+          "http://127.0.0.1:8001/news/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
       },
       "tier": "T1_5",
       "first_party": true,
       "owner_entity_id": "zhaozhenkong",
       "participation_mode": "editorial",
       "interval_minutes": 60,
-      "tags": ["官方", "站内"],
+      "tags": [
+        "官方",
+        "站内"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
@@ -141,15 +178,151 @@
         "url": "http://127.0.0.1:8001/tech",
         "itemSelector": "a[href^='/tech/'][href$='.html']",
         "detail": true,
-        "allowUrlPrefixes": ["http://127.0.0.1:8001/tech/"],
-        "_aihot": { "initialBackfillLimit": 8 }
+        "allowUrlPrefixes": [
+          "http://127.0.0.1:8001/tech/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
       },
       "tier": "T1_5",
       "first_party": true,
       "owner_entity_id": "zhaozhenkong",
       "participation_mode": "editorial",
       "interval_minutes": 120,
-      "tags": ["官方", "站内"],
+      "tags": [
+        "官方",
+        "站内"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "va-news",
+      "name": "真空设备分会 · 行业资讯",
+      "kind": "web_list",
+      "config": {
+        "url": "https://va.cgmia.org.cn/News/Index/9",
+        "itemSelector": "a[href^='/News/Detail/']",
+        "allowUrlPrefixes": [
+          "https://va.cgmia.org.cn/News/Detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1_5",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "协会",
+        "权威"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "va-info",
+      "name": "真空设备分会 · 行业信息",
+      "kind": "web_list",
+      "config": {
+        "url": "https://va.cgmia.org.cn/News/Index/10",
+        "itemSelector": "a[href^='/News/Detail/']",
+        "allowUrlPrefixes": [
+          "https://va.cgmia.org.cn/News/Detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1_5",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "协会",
+        "权威"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "va-market",
+      "name": "真空设备分会 · 市场动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://va.cgmia.org.cn/News/Index/11",
+        "itemSelector": "a[href^='/News/Detail/']",
+        "allowUrlPrefixes": [
+          "https://va.cgmia.org.cn/News/Detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1_5",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "协会",
+        "权威"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "leybold-news",
+      "name": "Leybold 莱宝 · News（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.leybold.com/en/news",
+        "itemSelector": "a[href^='/en/news/']",
+        "allowUrlPrefixes": [
+          "https://www.leybold.com/en/news/"
+        ],
+        "detail": true,
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "leybold",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "国际大牌"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "edwards-news",
+      "name": "Edwards 爱德华 · News（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.edwardsvacuum.com/en-uk/news-and-events",
+        "itemSelector": "a[href^='/en-uk/news-and-events/']",
+        "allowUrlPrefixes": [
+          "https://www.edwardsvacuum.com/en-uk/news-and-events/"
+        ],
+        "detail": true,
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "edwards",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "国际大牌"
+      ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     }

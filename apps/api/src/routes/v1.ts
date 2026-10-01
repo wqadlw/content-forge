@@ -58,11 +58,13 @@ export function publicHandler(fn: Handler): Handler {
 
 export function registerV1(app: FastifyInstance) {
   app.get("/api/v1/items", publicHandler(async (req, reply) => {
-    const q = strictQuery(req, ["mode", "category", "window", "by", "q", "limit", "cursor"]);
+    const q = strictQuery(req, ["mode", "category", "window", "by", "q", "topic", "limit", "cursor"]);
     const mode = enumParam(q.mode, "mode", ["selected", "all"] as const, "selected");
     const window = enumParam(q.window, "window", ["24h", "7d"] as const, "7d");
     const by = enumParam(q.by, "by", ["timeline", "published"] as const, "timeline");
     const category = q.category === undefined ? null : enumParam<PublicApiCategoryKey>(q.category, "category", PUBLIC_API_CATEGORY_KEYS, "tip");
+    // 批次 HS6b'：topic slug（企业·产品主题过滤），未知名由 v1Items 内抛 QueryError
+    const topic = q.topic === undefined || q.topic.trim() === "" ? null : q.topic.trim();
     let search: string | null = null;
     if (q.q !== undefined) {
       search = q.q.trim();
@@ -71,7 +73,7 @@ export function registerV1(app: FastifyInstance) {
     }
     const limit = intParam(q.limit, "limit", 1, 100, 50);
     if (q.cursor !== undefined && q.cursor.length === 0) throw new InvalidCursorError("empty cursor");
-    const body = await v1Items({ mode, window, by, category, q: search, limit, cursor: q.cursor ?? null });
+    const body = await v1Items({ mode, window, by, category, topic, q: search, limit, cursor: q.cursor ?? null });
     return sendJsonWithEtag(req, reply, body, { etagPrefix: "v1-items", cacheControl: V1_CACHE_CONTROL.items });
   }));
 
