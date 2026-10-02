@@ -37,6 +37,13 @@ const Output = z.object({
   body_paragraphs: z.array(z.string()).min(4).max(8),
 });
 
+/* 选题相关性门（HS8R）：真空设备/真空应用行业判定，跑题素材不花成稿 token */
+const Relevance = z.object({ relevant: z.boolean(), reason: z.string() });
+const RELEVANCE_SYSTEM = `你是找真空（真空行业 B2B 门户）的选题审核员。判断一条素材是否值得写成真空行业的行业资讯。
+相关 = 真空设备/技术（泵、机组、法兰、检漏、镀膜设备、分子泵等）或真空应用行业动态（半导体、光伏、镀膜、冻干、真空包装、铸造、冶金、医药等场景里的真空环节、真空企业本身）。
+不相关 = 仅偶然出现"真空泵"字样的其他行业故事（农牧、消费电子散热比喻、生活方式）、与真空无关的融资/经营动态、泛科技软文。
+拿不准时判 false（宁缺毋滥）。只输出 JSON：{"relevant": bool, "reason": "一句话理由"}`;
+
 const NEWS_SYSTEM = promptText("style-news");
 const DEEPDIVE_SYSTEM = promptText("style-deepdive");
 const VERSION = promptVersion("style-news", "style-deepdive", "rules-anti-hallucination");
@@ -56,10 +63,11 @@ interface Candidate {
   source_name: string;
   tier: string;
   selected: boolean;
+  story_id: string | null;
 }
 
-const candidates = await sql<Candidate[]>`
-  SELECT p.article_id, p.title, p.original_title, p.summary, p.url, p.published_at, s.name AS source_name, s.tier, p.selected
+const candidates = (await sql<Candidate[]>`
+  SELECT p.article_id, p.title, p.original_title, p.summary, p.url, p.published_at, s.name AS source_name, s.tier, p.selected, p.story_id
   FROM publications p JOIN sources s ON s.id = p.source_id
   WHERE NOT EXISTS (SELECT 1 FROM article_writes w WHERE w.article_id = p.article_id)
     AND p.eligible
@@ -67,14 +75,48 @@ const candidates = await sql<Candidate[]>`
     AND length(coalesce(p.summary, '')) >= 30
     AND s.name NOT LIKE '找真空%'
   ORDER BY p.selected DESC, CASE s.tier WHEN 'T1' THEN 0 WHEN 'T1_5' THEN 1 ELSE 2 END, p.published_at DESC
-  LIMIT ${limit}`;
+  LIMIT ${limit * 2}`)
+  /* 事件去重（HS8R）：同一 story 聚簇只成稿一篇（兆默一轮融资写过三篇的教训） */
+  .filter((c, i, all) => {
+    if (!c.story_id) return true;
+    return all.findIndex((x) => x.story_id === c.story_id) === i;
+  })
+  .slice(0, limit);
 
-console.log(`candidates: ${candidates.length}`);
+console.log(`candidates: ${candidates.length} (after story dedup)`);
 
 let written = 0;
 let rejected = 0;
 
 for (const c of candidates) {
+  /* 选题相关性门（HS8R）：跑题素材直接记台账，不进入成稿 */
+  let rel: z.infer<typeof Relevance> | null = null;
+  try {
+    const relRes = await chatJson({
+      model: await modelFor("articleWrite"),
+      purpose: "relevance_check",
+      subject: `rel:${c.article_id}`,
+      promptVersion: VERSION,
+      system: RELEVANCE_SYSTEM,
+      user: JSON.stringify({ 素材标题: c.original_title ?? c.title, 摘要: c.summary, 来源: c.source_name }),
+      schema: Relevance,
+      temperature: 0,
+      maxTokens: 300,
+      timeoutMs: 60_000,
+    });
+    rel = relRes.data;
+  } catch (e) {
+    /* 判定失败按不相关处理（宁可漏稿不可跑题） */
+    rel = { relevant: false, reason: `relevance check failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
+  if (!rel.relevant) {
+    await sql`INSERT INTO article_writes (article_id, status, genre, title, slug, category, summary, seo_title, seo_keywords, seo_description, body, reject_reason, prompt_version)
+      VALUES (${c.article_id}, 'rejected', 'news', ${c.title}, '', '', '', '', '', '', '', ${"off-topic: " + rel.reason}, ${VERSION})`;
+    rejected++;
+    console.log(`OFFTOPIC ${c.article_id}: ${rel.reason}`);
+    continue;
+  }
+
   const genre = values.genre === "auto" ? (cjk(c.summary ?? "") >= 200 ? "deepdive" : "news") : values.genre;
   const system = genre === "deepdive" ? DEEPDIVE_SYSTEM : NEWS_SYSTEM;
 
