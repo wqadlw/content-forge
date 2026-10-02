@@ -55,17 +55,18 @@ interface Candidate {
   published_at: Date;
   source_name: string;
   tier: string;
+  selected: boolean;
 }
 
 const candidates = await sql<Candidate[]>`
-  SELECT p.article_id, p.title, p.original_title, p.summary, p.url, p.published_at, s.name AS source_name, s.tier
+  SELECT p.article_id, p.title, p.original_title, p.summary, p.url, p.published_at, s.name AS source_name, s.tier, p.selected
   FROM publications p JOIN sources s ON s.id = p.source_id
   WHERE NOT EXISTS (SELECT 1 FROM article_writes w WHERE w.article_id = p.article_id)
     AND p.eligible
     AND p.published_at >= ${values["min-date"]}::timestamptz
     AND length(coalesce(p.summary, '')) >= 30
     AND s.name NOT LIKE '找真空%'
-  ORDER BY CASE s.tier WHEN 'T1' THEN 0 WHEN 'T1_5' THEN 1 ELSE 2 END, p.published_at DESC
+  ORDER BY p.selected DESC, CASE s.tier WHEN 'T1' THEN 0 WHEN 'T1_5' THEN 1 ELSE 2 END, p.published_at DESC
   LIMIT ${limit}`;
 
 console.log(`candidates: ${candidates.length}`);
@@ -152,6 +153,7 @@ for (const c of candidates) {
     source: c.source_name,
     source_url: c.url,
     material_published_at: c.published_at,
+    featured: c.selected, // HS8：双评分过线素材的成稿 → 站点 is_featured=1（行业热点 tab 数据源）
   });
   appendFileSync(values.out, line + "\n");
   written++;
