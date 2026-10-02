@@ -3,42 +3,42 @@
 // 域名不在这里：部署时用环境变量 SITE_URL 设置。
 
 export const SITE = {
-  /** 站名：导航、页面标题、分享图、RSS、MCP、后台都用它。 */
-  name: "找真空热点",
+  /** 站名：导航、页面标题、分享图、RSS、MCP、后台都用它。批次 HS10-F1：正名 zzk-forge。 */
+  name: "找真空内容锻造坊",
   /**
    * 行业词：拼进默认说法里，比如“AI 日报”“AI 动态”。
    * 这里是“真空行业”。
    */
   subject: "真空行业",
   /** 首页的完整标题（浏览器标签、搜索结果）。 */
-  homeTitle: "找真空热点 — 真空行业动态 · 每日精选与日报",
+  homeTitle: "找真空内容锻造坊 — 真空行业内容生产线",
   /** 一句话介绍：搜索引擎、分享卡片、RSS、llms.txt 会用。 */
-  description: "自动盯住真空行业的厂商新闻、行业媒体与找真空站内动态，用模型摘要、打分、精选，把同一件事的多篇报道归到一起，每天早上出一份行业日报。",
+  description: "找真空的后台内容车间：定时盯住真空行业信源与找真空站内动态，用模型摘要、打分、聚簇、成稿，把成品自动供给找真空网站。",
   /** 首页左上角和侧边栏下面的一行小字。 */
-  tagline: "值得关注的真空行业动态",
+  tagline: "找真空的后台生产车间",
   /** 界面语言（HTML lang、og:locale）。 */
   locale: "zh-CN",
   /** 默认域名，只在没设置 SITE_URL 时使用。 */
   defaultUrl: "http://127.0.0.1:8003",
   /**
-   * MCP 工具名的前缀（小写字母、数字、下划线），工具会叫 zzkhot_get_latest、zzkhot_search……
+   * MCP 工具名的前缀（小写字母、数字、下划线），工具会叫 zzkforge_get_latest、zzkforge_search……
    * 已经有人接入后就不要再改。
    */
-  mcpPrefix: "zzkhot",
+  mcpPrefix: "zzkforge",
   /** 对外联系邮箱（选填）：使用规则、llms.txt、响应头里会写。 */
   contactEmail: null as string | null,
   /** 页脚的一行小字（选填）。 */
-  footerNote: "找真空旗下行业热点站 · 由 AIHOT 开源框架驱动",
+  footerNote: "找真空旗下内容车间 · 由 AIHOT 开源框架驱动",
   /** 中国大陆网站的 ICP 备案号（选填），填了就显示在页脚并链接到工信部备案系统。 */
   icp: null as string | null,
   /** 结构化数据里的网站运营者（搜索引擎用）。 */
   organization: {
-    name: "找真空热点",
+    name: "找真空内容锻造坊",
     /** 创始人（选填）：{ name, url, description }。 */
     founder: null as null | { name: string; url?: string; description?: string },
   },
   /** 抓取信源时报上的名字（User-Agent 里用），不要冒用别的站。 */
-  crawlerName: "ZZKHotBot",
+  crawlerName: "ZZKForgeBot",
 } as const;
 
 /** 关于页的文案。数字（信源数、收录数、精选数、日报期数）来自站内实时统计，不用写在这里。 */
