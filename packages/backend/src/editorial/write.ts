@@ -51,6 +51,7 @@ interface Candidate {
   tier: string;
   selected: boolean;
   story_id: string | null;
+  pinned: boolean;
 }
 
 export interface WriteBatchOptions {
@@ -81,19 +82,24 @@ export async function writeBatch(opts: WriteBatchOptions = {}): Promise<WriteBat
   const result: WriteBatchResult = { candidates: 0, written: 0, rejected: 0, pushed: 0, titles: [] };
 
   const candidates = (await sql<Candidate[]>`
-    SELECT p.article_id, p.title, p.original_title, p.summary, p.url, p.published_at, s.name AS source_name, s.tier, p.selected, p.story_id
-    FROM publications p JOIN sources s ON s.id = p.source_id
+    SELECT p.article_id, p.title, p.original_title, p.summary, p.url, p.published_at, s.name AS source_name, s.tier, p.selected, p.story_id,
+           (f.article_id IS NOT NULL) AS pinned
+    FROM publications p
+    JOIN sources s ON s.id = p.source_id
+    LEFT JOIN forge_pins f ON f.article_id = p.article_id
     WHERE NOT EXISTS (SELECT 1 FROM article_writes w WHERE w.article_id = p.article_id)
-      AND p.eligible
-      AND p.published_at >= ${minDate}::timestamptz
+      AND (coalesce(p.published_at, p.discovered_at) >= ${minDate}::timestamptz OR f.article_id IS NOT NULL)
       AND length(coalesce(p.summary, '')) >= 30
+      AND (p.eligible OR f.article_id IS NOT NULL)
       AND s.name NOT LIKE '找真空%'
-    ORDER BY p.selected DESC, CASE s.tier WHEN 'T1' THEN 0 WHEN 'T1_5' THEN 1 ELSE 2 END, p.published_at DESC
+    ORDER BY (f.article_id IS NOT NULL) DESC, p.selected DESC, CASE s.tier WHEN 'T1' THEN 0 WHEN 'T1_5' THEN 1 ELSE 2 END, coalesce(p.published_at, p.discovered_at) DESC
     LIMIT ${limit * 2}`)
-    /* 事件去重（HS8R）：同一 story 聚簇只成稿一篇（兆默一轮融资写过三篇的教训） */
+    /* 事件去重（HS8R）：同一 story 聚簇只成稿一篇（兆默一轮融资写过三篇的教训）。
+     * pin（F3）例外：编辑点名的事件不受去重约束。 */
     .filter((c, i, all) => {
+      if (c.pinned) return true;
       if (!c.story_id) return true;
-      return all.findIndex((x) => x.story_id === c.story_id) === i;
+      return !all.some((x, j) => j < i && x.story_id === c.story_id && !x.pinned);
     })
     .slice(0, limit);
 

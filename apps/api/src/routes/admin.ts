@@ -8,6 +8,7 @@ import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aiho
 import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
 
 import { contentChain, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
+import { materialsOverview, pinArticle, reviewQuality, unpinArticle, writesLedger } from "@aihot/backend/admin/forge";
 import { banSource, eraseFeedback, feedbackScreenshot, listFeedback, unbanSource, updateFeedback } from "@aihot/backend/admin/feedback";
 import { listMonitorEvents, listMonitorPosts, relinkPost, resolveMonitorPost, reviewReceipt, setWithdrawn, updateMonitorEvent } from "@aihot/backend/admin/monitor";
 import { requeueFailedArticles, runsOverview } from "@aihot/backend/admin/runs";
@@ -137,4 +138,31 @@ export function registerAdmin(app: FastifyInstance) {
 
   app.get("/api/admin/nav-counts", adminHandler(async () => navCounts()));
   app.get("/api/admin/audit", adminHandler(async (req) => listAudit({ subject: q(req).subject, action: q(req).action, page: page(req) })));
+
+  // 内容车间（批次 HS10-F2）：素材池浏览 + 成稿台账（中枢 forge 屏数据源）
+  app.get("/api/admin/forge/materials", adminHandler(async (req) => {
+    const f = q(req);
+    const filter = f.filter === "selected" || f.filter === "all" ? f.filter : "eligible";
+    return materialsOverview(filter, Math.max(1, Math.min(200, Number(f.page) || 1)));
+  }));
+  app.get("/api/admin/forge/writes", adminHandler(async (req) => {
+    const f = q(req);
+    return writesLedger(f.status ?? "", Math.max(1, Math.min(200, Number(f.page) || 1)));
+  }));
+  app.post("/api/admin/forge/pin", adminHandler(async (req, _reply, admin) => {
+    const b = body<{ article_id?: string }>(req);
+    if (!b.article_id || !/^[a-zA-Z0-9_-]{1,80}$/.test(b.article_id)) throw Object.assign(new Error("article_id 形态非法"), { statusCode: 400 });
+    await pinArticle(b.article_id, actorOf(admin));
+    return { pinned: b.article_id };
+  }));
+  app.delete("/api/admin/forge/pin/:article_id", adminHandler(async (req, _reply, admin) => {
+    await unpinArticle(param(req, "article_id"), actorOf(admin));
+    return { unpinned: param(req, "article_id") };
+  }));
+  app.patch("/api/admin/forge/writes/:article_id/quality", adminHandler(async (req, _reply, admin) => {
+    const b = body<{ verdict?: string; note?: string }>(req);
+    if (!b.verdict) throw Object.assign(new Error("verdict 必填"), { statusCode: 400 });
+    await reviewQuality(param(req, "article_id"), b.verdict, String(b.note ?? "").slice(0, 200), actorOf(admin));
+    return { reviewed: param(req, "article_id"), verdict: b.verdict };
+  }));
 }
