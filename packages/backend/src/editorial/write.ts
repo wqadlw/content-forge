@@ -12,6 +12,7 @@ import { guardedFetch } from "../lib/http-fetch.ts";
 import { chatJson } from "../providers/llm.ts";
 import { modelFor } from "./models.ts";
 import { promptText, promptVersion } from "./prompts.ts";
+import { TECH_CATEGORIES } from "@aihot/industry/tech-categories";
 
 const asString = z.preprocess((v) => (Array.isArray(v) ? v.map(String).join(",") : v), z.string());
 
@@ -259,4 +260,197 @@ export async function publishToSite(rows: Array<Record<string, unknown>>): Promi
 export async function runForgeWrite(): Promise<WriteBatchResult> {
   const limit = Number(process.env.FORGE_WRITE_LIMIT ?? "50");
   return writeBatch({ limit: Number.isInteger(limit) && limit >= 1 ? limit : 50 });
+}
+
+// ── 技术文档线（批次 F4）：/tech 长青内容，锚定找真空产品库 ─────────────────────────────
+
+const TECH_SYSTEM = promptText("style-tech");
+export const TECH_PROMPT_VERSION = promptVersion("style-tech", "rules-anti-hallucination");
+
+export type TechKind = "guide" | "repair" | "wiki";
+export const TECH_KINDS: TechKind[] = ["guide", "repair", "wiki"];
+export const TECH_KIND_NAMES: Record<TechKind, string> = {
+  guide: "选型指南",
+  repair: "维修保养",
+  wiki: "行业百科",
+};
+
+const TechOutput = z.object({
+  title: z.string(),
+  summary: z.string(),
+  seo_title: asString,
+  seo_keywords: asString,
+  seo_description: asString,
+  sections: z.array(z.object({ heading: z.string(), paragraphs: z.array(z.string()).min(1).max(4) })).min(3).max(6),
+});
+
+interface SiteProduct {
+  name: string;
+  category_name?: string | null;
+  brand_name?: string | null;
+  supplier_name?: string | null;
+  specs?: Record<string, string>;
+}
+
+/** 从站点 internal-api 拉该品类在售产品（真实型号与参数，技术文档的锚定素材）。 */
+async function fetchSiteProducts(categoryName: string): Promise<SiteProduct[]> {
+  const base = process.env.SITE_IMPORT_BASE?.replace(/\/$/, "");
+  const token = process.env.SITE_IMPORT_TOKEN;
+  if (!base || !token) throw new Error("SITE_IMPORT_BASE/TOKEN 未配置——技术文档线依赖站点产品库");
+  const resp = await guardedFetch(
+    `${base}/internal-api/v1/products/search?keyword=${encodeURIComponent(categoryName)}&page_size=20`,
+    { headers: { "X-Internal-Token": token }, timeoutMs: 15_000, maxBytes: 2 * 1024 * 1024, maxRedirects: 0 },
+  );
+  if (resp.status !== 200) throw new Error(`产品库拉取失败 HTTP ${resp.status}`);
+  const data = JSON.parse(resp.text()) as { items?: SiteProduct[] };
+  return data.items ?? [];
+}
+
+/** 车间技术文档线：每类目一稿，锚定站点产品库真实型号与参数（F4）。 */
+export async function writeTechBatch(opts: { kind: TechKind; limit?: number }): Promise<WriteBatchResult> {
+  const kind = opts.kind;
+  const perKind = opts.limit ?? 3;
+  const result: WriteBatchResult = { candidates: 0, written: 0, rejected: 0, pushed: 0, titles: [] };
+  const techRows: Array<Record<string, unknown>> = [];
+
+  for (const category of TECH_CATEGORIES) {
+    if (result.written >= perKind) break;
+    /* 同一（体裁,类目）已有成稿即跳过——长青文档一稿到位，不追新闻式重复 */
+    const exists = await sql<{ article_id: string }[]>`
+      SELECT article_id FROM article_writes WHERE genre = ${kind} AND category = ${category} AND status = 'written' LIMIT 1`;
+    if (exists.length > 0) continue;
+
+    let products: SiteProduct[];
+    try {
+      products = await fetchSiteProducts(category);
+    } catch (e) {
+      result.rejected++;
+      console.error(`[forge.tech] ${category} 产品库拉取失败: ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
+    if (products.length < 3) continue; /* 产品库样本不足，写了站不住 */
+
+    result.candidates++;
+    const model = await modelFor("articleWrite");
+    let data: z.infer<typeof TechOutput> | null = null;
+    let fail: string | null = null;
+    for (let attempt = 0; attempt < 2 && !data; attempt++) {
+      try {
+        const res = await chatJson({
+          model,
+          purpose: "article_write_tech",
+          subject: `tech:${kind}:${category}#${attempt}`,
+          promptVersion: TECH_PROMPT_VERSION,
+          system: TECH_SYSTEM,
+          user: JSON.stringify({
+            文档类型: TECH_KIND_NAMES[kind],
+            品类: category,
+            产品库素材: products.slice(0, 12).map((p) => ({
+              产品名: p.name,
+              品牌: p.brand_name ?? undefined,
+              供应商: p.supplier_name ?? undefined,
+              参数: p.specs ?? undefined,
+            })),
+            // JSON mode 要求 prompt 出现 "json"
+            输出要求: "只输出一个 JSON 对象：title、summary、seo_title、seo_keywords、seo_description、sections（数组，每项 {heading, paragraphs: string[]}，3-6 节）。红线：产品型号与参数只允许来自产品库素材；不写任何新闻时效表述；禁用「首先/其次/综上所述/值得注意的是/这意味着」等套话",
+          }),
+          schema: TechOutput,
+          temperature: 0.4,
+          maxTokens: 4000,
+          timeoutMs: 180_000,
+          attemptTag: attempt > 0 ? "retry" : undefined,
+        });
+        data = res.data;
+      } catch (e) {
+        fail = `model: ${e instanceof Error ? e.message : String(e)}`;
+      }
+    }
+
+    if (data) {
+      const allText = data.sections.map((s) => s.heading + s.paragraphs.join("")).join("");
+      const failChecks: string[] = [];
+      const total = cjk(allText);
+      if (total < 600 || total > 1800) failChecks.push(`字数${total}`);
+      if (BANNED.test(data.title) || BANNED.test(allText)) failChecks.push("禁词");
+      if (META.test(allText)) failChecks.push("元话语");
+      if (data.title.length < 12 || data.title.length > 40) failChecks.push(`标题${data.title.length}字`);
+      if (cjk(data.summary) > 140) failChecks.push("摘要超140");
+      if (failChecks.length > 0) fail = `gate: ${failChecks.join("、")}`;
+    }
+
+    if (!data) {
+      await sql`INSERT INTO article_writes (article_id, status, genre, category, title, slug, summary, seo_title, seo_keywords, seo_description, body, reject_reason, prompt_version)
+        VALUES (${"tech-" + kind + "-" + createHash("sha256").update(category).digest("hex").slice(0, 12)}, 'rejected', ${kind}, ${category}, ${category + "·" + TECH_KIND_NAMES[kind]}, '', '', '', '', '', '', ${fail ?? "unknown"}, ${TECH_PROMPT_VERSION})`;
+      result.rejected++;
+      continue;
+    }
+
+    const title = data.title;
+    const slug = `zzk-tech-${kind}-${createHash("sha256").update(category).digest("hex").slice(0, 8)}`;
+    const body = data.sections.map((s) => "<h3>" + s.heading + "</h3>" + s.paragraphs.map((p) => "<p>" + p.trim() + "</p>").join("")).join("\n")
+      + `\n<p><em>本文由找真空内容锻造坊基于找真空产品库在售数据编写 · 供应商标注以产品页为准</em></p>`;
+
+    await sql`INSERT INTO article_writes (article_id, status, genre, category, title, slug, summary, seo_title, seo_keywords, seo_description, body, prompt_version)
+      VALUES (${"tech-" + kind + "-" + createHash("sha256").update(category).digest("hex").slice(0, 12)}, 'written', ${kind}, ${category}, ${title}, ${slug}, ${data.summary}, ${data.seo_title}, ${data.seo_keywords}, ${data.seo_description}, ${body}, ${TECH_PROMPT_VERSION})`;
+
+    rows_tech_push(techRows, {
+      article_id: "tech-" + kind + "-" + category,
+      type: kind,
+      title,
+      slug,
+      category,
+      summary: data.summary,
+      seo_title: data.seo_title,
+      seo_keywords: data.seo_keywords,
+      seo_description: data.seo_description,
+      body,
+      author: "找真空研究院",
+      source: "找真空产品库",
+    });
+    result.written++;
+    result.titles.push({ slug, title });
+  }
+
+  /* 技术稿推送复用同一 import 通道（items 带 type=guide|repair|wiki） */
+  if (techRows.length > 0) {
+    result.pushed = await publishRows(techRows);
+  }
+  return result;
+}
+
+function rows_tech_push(buffer: Array<Record<string, unknown>>, row: Record<string, unknown>): void {
+  buffer.push(row);
+}
+
+async function publishRows(items: Array<Record<string, unknown>>): Promise<number> {
+  const base = process.env.SITE_IMPORT_BASE?.replace(/\/$/, "");
+  const token = process.env.SITE_IMPORT_TOKEN;
+  if (!base || !token || items.length === 0) return 0;
+  try {
+    const resp = await guardedFetch(`${base}/internal-api/v1/content/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Internal-Token": token },
+      body: JSON.stringify({ items }),
+      timeoutMs: 30_000,
+      maxBytes: 8 * 1024 * 1024,
+      maxRedirects: 0,
+    });
+    if (resp.status !== 200) return 0;
+    const data = JSON.parse(resp.text()) as { created?: number };
+    return data.created ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** worker 定时入口（forge.write-tech，每周三 06:30）：三种体裁各成稿一批。 */
+export async function runForgeTechWrite(): Promise<WriteBatchResult> {
+  const per = Number(process.env.FORGE_TECH_LIMIT ?? "1");
+  const agg: WriteBatchResult = { candidates: 0, written: 0, rejected: 0, pushed: 0, titles: [] };
+  for (const kind of TECH_KINDS) {
+    const r = await writeTechBatch({ kind, limit: Number.isInteger(per) && per >= 1 ? per : 1 });
+    agg.candidates += r.candidates; agg.written += r.written; agg.rejected += r.rejected; agg.pushed += r.pushed;
+    agg.titles.push(...r.titles);
+  }
+  return agg;
 }
