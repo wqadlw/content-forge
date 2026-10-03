@@ -1,41 +1,59 @@
-# 给 Agent 的说明
+# AGENTS.md · Content Forge Agent 开发说明
 
-这是一个行业热点网站的框架：采集信源、用模型筛选和写作、归组事件、出日报，并通过网站、RSS、公开 API 和 MCP 对外提供。默认配置是一个 AI 行业的示例站。先读 README，再按任务读 `docs/` 里对应的文档。
+> 找真空的后台内容车间：15 信源 → AI 四道闸成稿 → 自动推送到找真空网站。
+> **Agent 会话开始前必读 `.ai/00-MAP.md`（项目地图）+ `.ai/01-DEV-STANDARD.md`（标准流程）+ `.ai/02-STATE.md`（当前状态）+ `.ai/03-LESSONS.md`（历史教训）。**
 
-## 最常见的任务：改成另一个行业
+## 这是什么项目
 
-按 `docs/customize.md` 的顺序做。行业相关的一切都在 `industry/`：站名文案（`site.ts`）、分类标签（`taxonomy.ts`）、主题（`topics.json`）、示范信源（`sources.json`）、提示词（`prompts/`）、门槛（`selection.ts`）、模块开关（`features.ts`）、品牌（`brand/`）、条款页（`pages/`）。通常不需要改 `apps/` 和 `packages/`。
+Content Forge（正名 zzk-forge）= 接入任意 LLM API 的行业资讯自动化车间。定时抓取信源 → AI 筛选/聚簇/成稿 → 自动推送到找真空网站。本仓从 AIHOT 开源框架衍生（MIT），已无头化（无前端），管理面在运营中枢（zhaozhenkong-ops-console）。
 
-这些事要问使用者本人，不要替他决定：站名；要盯哪些信源；什么消息重要、什么是噪声；分类怎么分；条款和隐私说明的内容（`industry/pages/` 是模板，上线前需要他本人确认）。
+## Agent 开发标准流程（六步，不可跳过）
 
-改评分标准时保留原有结构（内容类型、五个维度加权、噪声压制、安全边界），替换的是“什么算重要”“什么算噪声”的例子。门槛要用使用者标注的样本重新校准（`docs/selection.md`），不要凭感觉改数字。
+```
+① 调研 → ② 摸码 → ③ 出方案档 → ④ 实施+测试+构建 → ⑤ 端到端实测验收 → ⑥ 提交+留痕
+```
 
-## 运行与检查
+详见 `.ai/01-DEV-STANDARD.md`。违反任何一步 = 后面必然返工（已验证）。
 
-- Node.js 24 直接运行 TypeScript，后端没有构建步骤。npm workspaces：`apps/*`、`packages/*`、`industry`。
-- 本机运行和 Docker 见 `docs/deploy.md`。
-- 改完至少跑：
-  ```bash
-  npm run typecheck
-  DATABASE_URL=postgres://127.0.0.1:5432/<名字>_test npm test   # 空库，名字必须以 _test 或 _ci 结尾，先 node scripts/migrate.ts
-  npm run build -w @aihot/web && node --test apps/web/tests/*.test.ts
-  node scripts/smoke.ts --base http://localhost:3000             # 站点跑起来以后
-  ```
-- `tests/` 里部分测试用的是示例行业的分类、标签和公司，改了 `industry/taxonomy.ts` 后把这些例子换成新行业的对应项。
+## 最常见任务
+
+### 信源接入
+见 `.ai/01-DEV-STANDARD.md` 第二节。核心：先四协议探测可达性 → 反爬挂起不硬闯 → allowUrlPrefixes 按解析后绝对路径写 → 国内 .com 配 egressRoute=direct。
+
+### 成稿器改动
+改提示词（industry/prompts/style-*.md）不碰代码；改质量门逻辑改 write.ts。两者改后必须跑一次手动成稿验证输出。
+
+### 质量门调整
+字数/禁词/元话语阈值要有数据支撑。新增检查项必须配套测试用例（正例+反例）。
+
+### 排障
+见 `.ai/04-WORKFLOW.md` 事故处理表。常见根因：
+- 成稿 0 → 查台账 reject_reason + sources.last_error
+- 新信源 0 素材 → 查 allowUrlPrefixes 匹配 + egressRoute
+- 接收端 401 → SITE_IMPORT_TOKEN 不匹配
 
 ## 要守住的规则
 
-- 前端（`apps/web`）只通过 HTTP 读 `apps/api`，数据库、模型调用和密钥只在后端。
-- 所有公开出口都从 `packages/backend/src/publication/` 这一个读取层读，新增公开出口也一样。
-- 读者打开页面不触发模型调用；模型只在 worker 的任务里调用。
-- 付费请求都经过回执（`providers/receipts.ts`）和预算熔断，不要绕开。
-- 开发和测试时保持安全阀关闭：`COLLECT_ENABLED`、`MODEL_CALLS_ENABLED`、`FEISHU_*_ENABLED`、`INDEXNOW_SUBMIT_ENABLED`。测试不访问任何外部服务。
-- 信源默认只展示摘要和原文链接（`site_fulltext` 关）；只有来源明确允许时才打开全文。
-- 公开内容匿名，管理员和访客看到的一样；后台只允许管理员。
-- 数据库迁移只做向后兼容的增量，新迁移按编号加在 `database/migrations/` 末尾。
-- 不要提交 `.env`、密钥和 `.data/`。
-- 不要使用 AIHOT 的名字和 Logo。
+1. **成稿纪律**：素材里没有的事实不写——编造是内容车间的死刑
+2. **跑题不花 token**：相关性门在成稿调用之前，off-topic 直接进台账
+3. **pin 不豁免质检**：编辑点名改变排队顺序，不跳过质量门
+4. **文档与事实同步**：改了配置/流程/结构必须同步更新 `.ai/02-STATE.md`
+5. **新坑当场沉淀**：`.ai/03-LESSONS.md`——先查后加，不重复踩
+6. **公开仓纯净**：`industry/` 中的找真空定制与 `.ai/` 治理文档不进公开仓
+7. **测试协议**：改代码后跑 `npx tsc --noEmit -p packages/backend`（0 错） + `node --test tests/*.test.ts`（存量绿）
+8. **瞬时故障勿改码**：health=degraded 但手跑成功 = 瞬时故障，等健康度自动恢复
 
-## 写代码
+## 与其他仓的关系
 
-匹配周围代码的写法、命名和注释密度。选能清楚解决问题的简单方案，只定义正在使用的抽象。验证改动涉及的重要行为，不为简单的样式改动写测试。
+| 仓 | 关系 |
+|---|---|
+| zhaozhenkong-oxalpha | 接收端（:8001），internal-api/v1/content/import 接收车间成品 |
+| zhaozhenkong-ops-console | 运营中枢（:8002），内容车间五屏管理 |
+| b2b-rfq-copilot | AI 采购引擎（:8000），知识库同步（暂断） |
+
+## 本仓公开（github.com/wqadlw/content-forge）
+
+- `.ai/` 被 gitignore——**禁止 `git add -f .ai`**（治理文档含私有信息）
+- `industry/` 已替换为中性科技资讯示例包——找真空真实包在本地生产环境
+- `.env` 被 gitignore——全部密钥走环境变量
+- 上游 AIHOT（MIT）README 留档为 `README-AIHOT-upstream.md`
