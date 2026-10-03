@@ -226,6 +226,20 @@
         ],
         "_aihot": {
           "initialBackfillLimit": 12
+        },
+        "ingestNoiseFilter": {
+          "dropMarkersTitleOnly": [
+            "医药",
+            "新药",
+            "器械",
+            "获批",
+            "基因",
+            "试剂",
+            "试剂盒",
+            "临床",
+            "环保监测",
+            "监测机构"
+          ]
         }
       },
       "tier": "T1_5",
@@ -248,6 +262,20 @@
         ],
         "_aihot": {
           "initialBackfillLimit": 12
+        },
+        "ingestNoiseFilter": {
+          "dropMarkersTitleOnly": [
+            "医药",
+            "新药",
+            "器械",
+            "获批",
+            "基因",
+            "试剂",
+            "试剂盒",
+            "临床",
+            "环保监测",
+            "监测机构"
+          ]
         }
       },
       "tier": "T2",
