@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+data/
+runtime_data/
+dist/
+.cursorrules
+.data/

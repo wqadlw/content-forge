@@ -1,0 +1,33 @@
+{
+  "exportedAt": "2026-10-01",
+  "groups": [
+    { "key": "company", "name": "厂商与机构", "blurb": "按厂商追踪：谁出了新品、扩了产能、占了市场" },
+    { "key": "field", "name": "产品与技术", "blurb": "按泵型与技术领域深挖：旋片、螺杆、分子泵、检漏、镀膜……" },
+    { "key": "genre", "name": "内容形态", "blurb": "按内容类型浏览：价格行情、政策标准、展会、选型实践……" }
+  ],
+  "topics": [
+    { "slug": "busch", "name": "Busch 普旭", "group": "company", "entityId": "busch", "tags": ["Busch 普旭", "entity:busch"], "definition": "普旭（Busch）真空的全部动态：旋片/螺杆/爪式泵新品、在华业务与扩产。", "related": ["leybold", "edwards", "industry-news"] },
+    { "slug": "leybold", "name": "Leybold 莱宝", "group": "company", "entityId": "leybold", "tags": ["Leybold 莱宝", "entity:leybold"], "definition": "莱宝（Leybold）的全部动态：真空泵与真空技术新品、半导体与显示面板真空方案。", "related": ["busch", "pfeiffer", "semiconductor-vacuum"] },
+    { "slug": "edwards", "name": "Edwards 爱德华", "group": "company", "entityId": "edwards", "tags": ["Edwards 爱德华", "entity:edwards"], "definition": "爱德华（Edwards）的全部动态：干泵、分子泵、尾气处理，半导体与显示真空市场。", "related": ["leybold", "semiconductor-vacuum"] },
+    { "slug": "pfeiffer", "name": "Pfeiffer 普发", "group": "company", "entityId": "pfeiffer", "tags": ["Pfeiffer 普发", "entity:pfeiffer"], "definition": "普发真空（Pfeiffer）的全部动态：涡轮分子泵、质谱与检漏产品、分析与工业真空方案。", "related": ["leybold", "helium-leak"] },
+    { "slug": "domestic-vendors", "name": "国产真空厂商", "group": "company", "tags": ["中科仪", "北方华创", "汉钟精机", "鲍斯股份"], "definition": "国产真空设备厂商的动态：中科仪、北方华创、汉钟精机、鲍斯股份等的新品、扩产与资本动作。", "related": ["industry-news"] },
+    { "slug": "zhaozhenkong", "name": "找真空", "group": "company", "entityId": "zhaozhenkong", "tags": ["找真空", "entity:zhaozhenkong"], "definition": "找真空平台自身的动态：产品上新、供应商入驻、行情报告、平台功能更新。", "related": ["industry-news"] },
+    { "slug": "rotary-vane", "name": "旋片泵", "group": "field", "tags": ["旋片泵"], "definition": "旋片真空泵的产品、技术与市场内容：油式旋片泵新品、泵油保养、常见故障处理。", "related": ["dry-pump", "maintenance"] },
+    { "slug": "dry-pump", "name": "干泵（无油泵）", "group": "field", "tags": ["干泵", "螺杆泵"], "definition": "干式真空泵（螺杆、爪式、涡旋）的新品、工艺适配与无油真空趋势。", "related": ["rotary-vane", "semiconductor-vacuum"] },
+    { "slug": "roots-pump", "name": "罗茨泵", "group": "field", "tags": ["罗茨泵"], "definition": "罗茨真空泵（机械增压泵）的新品、机组组合与高抽速场景应用。", "related": ["vacuum-units"] },
+    { "slug": "turbo-molecular", "name": "分子泵", "group": "field", "tags": ["分子泵"], "definition": "涡轮分子泵的新品、高真空与超高真空应用、轴承与转子技术。", "related": ["semiconductor-vacuum", "lab-vacuum"] },
+    { "slug": "water-ring", "name": "水环泵", "group": "field", "tags": ["水环泵"], "definition": "水环式真空泵的产品、造纸/化工/电力场景应用与汽蚀防治。", "related": ["maintenance"] },
+    { "slug": "helium-leak", "name": "检漏", "group": "field", "tags": ["检漏"], "definition": "氦质谱检漏仪与检漏服务的动态：新品、检测案例、标准方法。", "related": ["lab-vacuum"] },
+    { "slug": "vacuum-measurement", "name": "真空测量", "group": "field", "tags": ["真空测量"], "definition": "真空计与真空测量的内容：皮拉尼/电容薄膜/电离计新品与校准。", "related": ["lab-vacuum"] },
+    { "slug": "vacuum-units", "name": "真空机组", "group": "field", "tags": ["真空机组"], "definition": "真空成套机组的内容：选型组合、系统集成、行业解决方案。", "related": ["rotary-vane", "dry-pump", "roots-pump"] },
+    { "slug": "semiconductor-vacuum", "name": "半导体真空", "group": "field", "tags": ["半导体真空"], "definition": "半导体制造中的真空技术与设备：晶圆制程真空、国产替代、供应链。", "related": ["edwards", "leybold", "naura"] },
+    { "slug": "coating-vacuum", "name": "真空镀膜", "group": "field", "tags": ["镀膜/涂覆"], "definition": "真空镀膜的内容：光学/装饰/硬质涂层镀膜设备与工艺、光伏与光学产业需求。", "related": ["dry-pump"] },
+    { "slug": "lab-vacuum", "name": "实验室真空", "group": "field", "tags": ["医疗/实验室真空"], "definition": "实验室与医疗真空的内容：真空系统搭建、冻干、样品前处理设备。", "related": ["turbo-molecular", "vacuum-measurement"] },
+    { "slug": "maintenance", "name": "维修保养", "group": "genre", "tags": ["技术/维修"], "definition": "真空泵维修保养的内容：故障诊断、泵油更换、维修案例与保养周期。", "related": ["rotary-vane", "water-ring"] },
+    { "slug": "selection-guide", "name": "选型指南", "group": "genre", "tags": ["选型/实践"], "definition": "真空泵选型的内容：按工况选泵、参数对比、实践案例。", "related": ["vacuum-units", "maintenance"] },
+    { "slug": "price-watch", "name": "价格行情", "group": "genre", "tags": ["价格行情", "中标/招投标"], "definition": "真空设备价格与行情：泵价波动、原材料行情、招投标中标价格。", "related": ["industry-news"] },
+    { "slug": "policy-standard", "name": "政策标准", "group": "genre", "tags": ["政策/标准"], "definition": "真空行业政策与标准：国标行标修订、能效政策、出口管制动态。", "related": ["industry-news"] },
+    { "slug": "expo-news", "name": "展会活动", "group": "genre", "tags": ["展会/活动"], "definition": "真空行业展会与会议：真空博览会、行业年会、厂商开放日。", "related": ["industry-news"] },
+    { "slug": "industry-news", "name": "行业动态", "group": "genre", "tags": ["行业动态"], "definition": "真空行业的综合动态：经营、并购、扩产、市场数据与产业链消息。", "related": ["domestic-vendors", "price-watch"] }
+  ]
+}
