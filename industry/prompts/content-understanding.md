@@ -10,9 +10,9 @@
 
 `itemType` 必须六选一：
 
-- `product_launch`：真空泵/机组/阀门/测量仪器/检漏设备/配件的新品发布或重大型号更新
+- `product_launch`：硬件/软件/云服务/AI 模型等新品发布或重大版本更新
 - `price_market`：泵价波动、原材料行情、招投标中标价格、供需变化
-- `tech_repair`：选型方法、维修保养、故障诊断、真空工艺应用
+- `tech_repair`：选型方法、运维保养、故障诊断、工程实践应用
 - `industry_event`：扩产建厂、并购合作、人事、经营数据、行业格局变化
 - `policy_standard`：国标行标发布修订、能效与环保政策、出口管制、认证
 - `expo_activity`：展会、行业会议、厂商开放日、线上研讨会
@@ -35,8 +35,8 @@
 
 其后可选 0–5 个适用标签，并且只能来自以下两个白名单：
 
-- 主题：旋片泵、螺杆泵、罗茨泵、分子泵、干泵、水环泵、往复泵、扩散泵、低温泵、溅射离子泵、真空阀门、真空测量、检漏、真空油/配件、镀膜/涂覆、半导体真空、光伏真空、锂电池真空、医疗/实验室真空、食品包装真空
-- 实体：Busch 普旭、Leybold 莱宝、Edwards 爱德华、Pfeiffer 普发、Atlas Copco、中科仪、北方华创、汉钟精机、鲍斯股份、英格索兰、找真空
+- 主题：AI 模型、云计算、开发者工具、芯片、数据库、网络安全、开源、SaaS、硬件、物联网
+- 实体：OpenAI、Anthropic、Google、Microsoft、Meta、AWS、NVIDIA、Vercel
 
 正文中即使明确出现了其他未列出的公司，也不要把它们放进 `tags`。不要创造白名单之外的标签。没有适用的主题或实体时，只返回第一个分类标签。
 
@@ -58,4 +58,4 @@
 
 只返回合法 JSON，不要 Markdown，不要解释。顶层必须且只能包含以下六个字段：
 
-{"itemType":"product_launch","authorRole":"principal","tags":["新品发布","干泵"],"editorialJudgment":"原文给出了新泵型的抽速与极限真空参数，采购方可以据此对比现有方案。","titleZh":"某厂商发布新一代干式螺杆真空泵","summaryZh":"某厂商发布新一代干式螺杆真空泵，给出抽速范围、极限真空与主要应用工况。"}
+{"itemType":"product_launch","authorRole":"principal","tags":["新品发布","干泵"],"editorialJudgment":"原文给出了模型的推理成本与能力边界参数，采购方可以据此对比现有方案。","titleZh":"某厂商发布新一代推理模型","summaryZh":"某厂商发布新一代推理模型，给出 token 成本、上下文窗口与主要应用场景。"}
