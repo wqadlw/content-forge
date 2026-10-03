@@ -334,6 +334,50 @@
         "厂商",
         "镀膜"
       ]
+    },
+    {
+      "id": "cgmia-news",
+      "name": "中国通用机械工业协会 · 产经新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cgmia.org.cn/Web/News/Index/2",
+        "itemSelector": "a[href*=\"/Web/News/Detail/\"]",
+        "allowUrlPrefixes": [
+          "https://www.cgmia.org.cn/Web/News/Detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1_5",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "协会",
+        "权威"
+      ]
+    },
+    {
+      "id": "cgmia-market",
+      "name": "中国通用机械工业协会 · 市场动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cgmia.org.cn/Web/News/Index/4",
+        "itemSelector": "a[href*=\"/Web/News/Detail/\"]",
+        "allowUrlPrefixes": [
+          "https://www.cgmia.org.cn/Web/News/Detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1_5",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "协会",
+        "权威"
+      ]
     }
   ]
 }
