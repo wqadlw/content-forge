@@ -282,30 +282,6 @@
       ]
     },
     {
-      "id": "hdzk-news",
-      "name": "湘潭宏大真空 · 新闻（官方）",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.hdzk.com.cn/CorporateNews/list.aspx",
-        "itemSelector": "a[href*=\"CorporateNews\"]",
-        "allowUrlPrefixes": [
-          "http://www.hdzk.com.cn/CorporateNews/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "hdzk",
-      "participation_mode": "editorial",
-      "interval_minutes": 360,
-      "tags": [
-        "厂商",
-        "镀膜"
-      ]
-    },
-    {
       "id": "cgmia-news",
       "name": "中国通用机械工业协会 · 产经新闻",
       "kind": "web_list",
@@ -350,30 +326,6 @@
       ]
     },
     {
-      "id": "moon-tech-news",
-      "name": "冰轮环境 · 新闻（官方）",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.moon-tech.com/news/company-news.jsp",
-        "itemSelector": "a[href*=\"comnews-detail-\"]",
-        "allowUrlPrefixes": [
-          "https://www.moon-tech.com/news/comnews-detail-"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "moontech",
-      "participation_mode": "editorial",
-      "interval_minutes": 360,
-      "tags": [
-        "厂商",
-        "压缩机"
-      ]
-    },
-    {
       "id": "hanbell-news",
       "name": "汉钟精机 · 公司新闻（官方）",
       "kind": "web_list",
@@ -395,6 +347,55 @@
       "tags": [
         "厂商",
         "螺杆压缩机"
+      ]
+    },
+    {
+      "id": "baosi-news",
+      "name": "鲍斯股份 · 资讯（公众号直链）",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.cnbaosi.com/news.html",
+        "itemSelector": "a[href*=\"mp.weixin.qq.com/s/\"]",
+        "allowUrlPrefixes": [
+          "https://mp.weixin.qq.com/s/",
+          "http://mp.weixin.qq.com/s/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        },
+        "egressRoute": "direct"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "baosi",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "厂商",
+        "螺杆泵"
+      ]
+    },
+    {
+      "id": "everblue-news",
+      "name": "Everblue · 应用案例（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "http://everblue-industries.com/newsclass_2/",
+        "itemSelector": "a[href*=\"casesdetail\"]",
+        "allowUrlPrefixes": [
+          "http://everblue-industries.com/application/casesdetail"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        },
+        "egressRoute": "direct"
+      },
+      "tier": "T2",
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "厂商",
+        "真空系统"
       ]
     }
   ]
