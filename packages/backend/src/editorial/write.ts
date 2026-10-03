@@ -454,3 +454,133 @@ export async function runForgeTechWrite(): Promise<WriteBatchResult> {
   }
   return agg;
 }
+
+// ── 周报线（批次 F5）：每周一聚合上周成稿 → /news/weekly（category=weekly）───────────────
+
+const WEEKLY_SYSTEM = promptText("style-weekly");
+export const WEEKLY_PROMPT_VERSION = promptVersion("style-weekly", "rules-anti-hallucination");
+
+const WeeklyOutput = z.object({
+  title: z.string(),
+  summary: z.string(),
+  seo_title: asString,
+  seo_keywords: asString,
+  seo_description: asString,
+  lead: z.string(),
+  segments: z.array(z.object({ heading: z.string(), text: z.string() })).min(1).max(5),
+});
+
+/** 周报线：聚合近 7 天台账成稿出刊（≥3 篇才写；LLM 叙述+确定性收录清单，杜绝幻觉链）。 */
+export async function writeWeeklyReport(opts: { now?: Date } = {}): Promise<WriteBatchResult> {
+  const now = opts.now ?? new Date();
+  const result: WriteBatchResult = { candidates: 0, written: 0, rejected: 0, pushed: 0, titles: [] };
+
+  const isoWeek = (() => {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const day = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400_000 + 1) / 7);
+    return `${d.getUTCFullYear()}W${String(week).padStart(2, "0")}`;
+  })();
+  const slug = `zzk-weekly-${isoWeek}`;
+  const exists = await sql<{ article_id: string }[]>`
+    SELECT article_id FROM article_writes WHERE slug = ${slug} AND status = 'written' LIMIT 1`;
+  if (exists.length > 0) return result; /* 本期已出刊 */
+
+  const source = await sql<{ title: string; summary: string; slug: string; created_at: Date }[]>`
+    SELECT title, summary, slug, created_at FROM article_writes
+    WHERE status = 'written' AND genre IN ('news', 'deepdive')
+      AND created_at >= now() - interval '7 days'
+    ORDER BY created_at DESC LIMIT 40`;
+  if (source.length < 3) return result; /* 素材不足不出刊（空周报比注水周报伤） */
+
+  /* 收录清单逐条链接校验（HS10-F5）：台账与站点可能漂移（成稿后被人工删除/重写），
+   * 死链进周报伤 SEO——逐条 GET 确认 200 才收录。本地回环 40 次请求成本可忽略。 */
+  const live: Array<{ title: string; summary: string; slug: string; created_at: Date; url: string }> = [];
+  for (const s of source) {
+    const ym = `${s.created_at.getUTCFullYear()}${String(s.created_at.getUTCMonth() + 1).padStart(2, "0")}`;
+    const url = `${(process.env.SITE_IMPORT_BASE ?? "").replace(/\/$/, "")}/news/${ym}/${s.slug}.html`;
+    try {
+      const probe = await guardedFetch(url, { timeoutMs: 5_000, maxBytes: 256 * 1024, maxRedirects: 0 });
+      if (probe.status === 200) live.push({ ...s, url });
+    } catch { /* 死链剔除 */ }
+  }
+  if (live.length < 3) return result;
+
+  result.candidates = source.length;
+  const model = await modelFor("articleWrite");
+  let data: z.infer<typeof WeeklyOutput> | null = null;
+  let fail: string | null = null;
+  for (let attempt = 0; attempt < 2 && !data; attempt++) {
+    try {
+      const res = await chatJson({
+        model,
+        purpose: "article_write_weekly",
+        subject: `weekly:${isoWeek}#${attempt}`,
+        promptVersion: WEEKLY_PROMPT_VERSION,
+        system: WEEKLY_SYSTEM,
+        user: JSON.stringify({
+          周期: isoWeek,
+          上周成稿: source.map((s) => ({ 标题: s.title, 摘要: s.summary })),
+          // JSON mode 要求 prompt 出现 "json"
+          输出要求: "只输出一个 JSON 对象：title、summary、seo_title、seo_keywords、seo_description、lead（导语一段）、segments（数组，每项 {heading, text}）。红线：所有事实出自输入清单；禁用「首先/其次/综上所述/值得注意的是/这意味着」等套话；不要生成任何链接——收录清单由系统拼接",
+        }),
+        schema: WeeklyOutput,
+        temperature: 0.4,
+        maxTokens: 3000,
+        timeoutMs: 180_000,
+        attemptTag: attempt > 0 ? "retry" : undefined,
+      });
+      data = res.data;
+    } catch (e) {
+      fail = `model: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
+
+  if (data) {
+    const allText = data.lead + data.segments.map((s) => s.heading + s.text).join("");
+    const failChecks: string[] = [];
+    const total = cjk(allText);
+    if (total < 300 || total > 1500) failChecks.push(`字数${total}`);
+    if (BANNED.test(data.title) || BANNED.test(allText)) failChecks.push("禁词");
+    if (data.title.length < 10 || data.title.length > 40) failChecks.push(`标题${data.title.length}字`);
+    if (failChecks.length > 0) fail = `gate: ${failChecks.join("、")}`;
+  }
+
+  if (!data) {
+    await sql`INSERT INTO article_writes (article_id, status, genre, title, slug, summary, reject_reason, prompt_version)
+      VALUES (${"weekly-" + isoWeek}, 'rejected', 'weekly', ${"周报 " + isoWeek}, '', '', '', ${fail ?? "unknown"}, ${WEEKLY_PROMPT_VERSION})`;
+    result.rejected++;
+    return result;
+  }
+
+  /* 确定性收录清单：链接来自台账 slug（无幻觉链）；单条摘要 ≤60 字 */
+  const items = live.map((s) => `<li><a href="${s.url.replace(/^https?:\/\/[^/]+/, "")}" rel="noopener">${s.title}</a></li>`).join("");
+  const body = `<p>${data.lead}</p>`
+    + data.segments.map((s) => `<h3>${s.heading}</h3><p>${s.text}</p>`).join("\n")
+    + `\n<h3>本期收录（${live.length} 篇）</h3><ul>${items}</ul>`
+    + `\n<p><em>找真空行业观察 · 每周一出刊，覆盖上周全部成稿</em></p>`;
+
+  const title = data.title;
+  await sql`INSERT INTO article_writes (article_id, status, genre, category, title, slug, summary, seo_title, seo_keywords, seo_description, body, prompt_version)
+    VALUES (${"weekly-" + isoWeek}, 'written', 'weekly', 'weekly', ${title}, ${slug}, ${data.summary}, ${data.seo_title}, ${data.seo_keywords}, ${data.seo_description}, ${body}, ${WEEKLY_PROMPT_VERSION})`;
+
+  result.written++;
+  result.titles.push({ slug, title });
+  result.pushed = await publishToSite([{
+    article_id: "weekly-" + isoWeek,
+    type: "news",
+    title,
+    slug,
+    category: "weekly",
+    summary: data.summary,
+    seo_title: data.seo_title,
+    seo_keywords: data.seo_keywords,
+    seo_description: data.seo_description,
+    body,
+    author: "找真空行业观察",
+    source: "找真空内容锻造坊",
+  }]);
+  return result;
+}

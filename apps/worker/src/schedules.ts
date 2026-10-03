@@ -12,7 +12,7 @@ import { computeHotRanking, snapshotHeat } from "@aihot/backend/events/hot";
 import { refreshStoryStatuses } from "@aihot/backend/events/digest";
 import { linkRelatedStories } from "@aihot/backend/events/consolidate";
 import { catchUpReports, composeDaily, composeMonthly, composeWeekly, dueDaily, dueWeekly, dueMonthly } from "@aihot/backend/reports/compose";
-import { runForgeWrite, runForgeTechWrite } from "@aihot/backend/editorial/write";
+import { runForgeWrite, runForgeTechWrite, writeWeeklyReport } from "@aihot/backend/editorial/write";
 import { runLeaderboardRound } from "@aihot/backend/leaderboard/method/run";
 import { refreshLeaderboard } from "@aihot/backend/leaderboard/fetch/refresh";
 import { monitorTick } from "@aihot/backend/monitor/scan";
@@ -46,6 +46,8 @@ export const SCHEDULES: Scheduled[] = [
   { name: "forge.write", cron: "40 6 * * 1-5", missed: "once", run: () => runForgeWrite() },
   // 技术文档线（批次 F4）：每周三 06:30 三种体裁各成稿一稿（选型指南/维修保养/行业百科 → /tech）。
   { name: "forge.write-tech", cron: "30 6 * * 3", missed: "once", run: () => runForgeTechWrite() },
+  // 周报线（批次 F5）：每周一 07:30 聚合上周成稿出刊 → /news/weekly（找真空站内，SEO 归属主站）。
+  { name: "forge.write-weekly", cron: "30 7 * * 1", missed: "once", run: () => writeWeeklyReport() },
   { name: "reports.weekly", cron: "0 10 * * 1", missed: "once", run: () => composeWeekly(dueWeekly()) },
   {
     name: "reports.monthly",
