@@ -5,3 +5,4 @@ data/
 runtime_data/
 dist/
 .cursorrules
+.data/
