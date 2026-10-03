@@ -348,6 +348,54 @@
         "协会",
         "权威"
       ]
+    },
+    {
+      "id": "moon-tech-news",
+      "name": "冰轮环境 · 新闻（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.moon-tech.com/news/company-news.jsp",
+        "itemSelector": "a[href*=\"comnews-detail-\"]",
+        "allowUrlPrefixes": [
+          "https://www.moon-tech.com/news/comnews-detail-"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "moontech",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "厂商",
+        "压缩机"
+      ]
+    },
+    {
+      "id": "hanbell-news",
+      "name": "汉钟精机 · 公司新闻（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.hanbell.com.cn/company-news",
+        "itemSelector": "a[href*=\"company-news-\"]",
+        "allowUrlPrefixes": [
+          "http://www.hanbell.com.cn/company-news-"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "hanbell",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "厂商",
+        "螺杆压缩机"
+      ]
     }
   ]
 }
