@@ -1,5 +1,5 @@
 // 内容车间成稿器（批次 HS10-F1 从 scripts/write-articles.ts 模块化）：把素材池里未成稿的真实条目，
-// 按找真空写作模板（industry/prompts/style-*）写成整篇行业资讯。纪律：每篇锚定素材（原始标题/摘要/
+// 按行业文风模板（industry/prompts/style-*）写成整篇行业资讯。纪律：每篇锚定素材（原始标题/摘要/
 // 来源/日期），写作=加工不=编造；选题相关性门（off-topic 不花成稿 token）+ 事件聚簇去重 + 确定性质量门
 // （字数/禁词/元话语）不达标打回台账；台账防重复成稿。
 // 定时：worker SCHEDULES 的 forge.write（工作日 06:40）调用 runForgeWrite，成品经 publishToSite 推送站点
@@ -13,6 +13,7 @@ import { chatJson } from "../providers/llm.ts";
 import { modelFor } from "./models.ts";
 import { promptText, promptVersion } from "./prompts.ts";
 import { TECH_CATEGORIES } from "@aihot/industry/tech-categories";
+import { SITE } from "@aihot/industry/site";
 
 const asString = z.preprocess((v) => (Array.isArray(v) ? v.map(String).join(",") : v), z.string());
 
@@ -27,9 +28,9 @@ const Output = z.object({
 
 /* 选题相关性门（HS8R）：真空设备/真空应用行业判定，跑题素材不花成稿 token */
 const Relevance = z.object({ relevant: z.boolean(), reason: z.string() });
-const RELEVANCE_SYSTEM = `你是找真空（真空行业 B2B 门户）的选题审核员。判断一条素材是否值得写成真空行业的行业资讯。
-相关 = 真空设备/技术（泵、机组、法兰、检漏、镀膜设备、分子泵等）或真空应用行业动态（半导体、光伏、镀膜、冻干、真空包装、铸造、冶金、医药等场景里的真空环节、真空企业本身）。
-不相关 = 仅偶然出现"真空泵"字样的其他行业故事（农牧、消费电子散热比喻、生活方式）、与真空无关的融资/经营动态、泛科技软文。
+const RELEVANCE_SYSTEM = `你是「Forge Tech Digest」（科技资讯门户）的选题审核员。判断一条素材是否值得写成科技行业的行业资讯。
+相关 = 科技产品/技术/厂商动态（硬件、软件、云服务、AI 模型、开发者工具等）或科技应用行业动态。
+不相关 = 仅偶然出现行业关键词的其他领域故事、生活消费内容、与本行业无关的融资/经营动态、营销软文。
 拿不准时判 false（宁缺毋滥）。只输出 JSON：{"relevant": bool, "reason": "一句话理由"}`;
 
 const NEWS_SYSTEM = promptText("style-news");
@@ -92,7 +93,7 @@ export async function writeBatch(opts: WriteBatchOptions = {}): Promise<WriteBat
       AND (coalesce(p.published_at, p.discovered_at) >= ${minDate}::timestamptz OR f.article_id IS NOT NULL)
       AND length(coalesce(p.summary, '')) >= 30
       AND (p.eligible OR f.article_id IS NOT NULL)
-      AND s.name NOT LIKE '找真空%'
+      AND s.name NOT LIKE '找真空%' -- 找真空站点自循环排除（部署者按需改自己的站名）
     ORDER BY (f.article_id IS NOT NULL) DESC, p.selected DESC, CASE s.tier WHEN 'T1' THEN 0 WHEN 'T1_5' THEN 1 ELSE 2 END, coalesce(p.published_at, p.discovered_at) DESC
     LIMIT ${limit * 2}`)
     /* 事件去重（HS8R）：同一 story 聚簇只成稿一篇（兆默一轮融资写过三篇的教训）。
@@ -192,7 +193,7 @@ export async function writeBatch(opts: WriteBatchOptions = {}): Promise<WriteBat
 
     const slug = slugFor(data.title);
     const body = data.body_paragraphs.map((p) => `<p>${p.replace(/^[#*\-\s]+/, "").trim()}</p>`).join("\n")
-      + `\n<p><em>找真空行业观察 · 综合自${c.source_name}等公开报道</em></p>`;
+      + `\n<p><em>${SITE.name}编辑 · 综合自${c.source_name}等公开报道</em></p>`;
 
     await sql`INSERT INTO article_writes (article_id, status, genre, title, slug, category, summary, seo_title, seo_keywords, seo_description, body, prompt_version)
       VALUES (${c.article_id}, 'written', ${genre}, ${data.title}, ${slug}, 'industry', ${data.summary}, ${data.seo_title}, ${data.seo_keywords}, ${data.seo_description}, ${body}, ${WRITE_PROMPT_VERSION})`;
@@ -208,7 +209,7 @@ export async function writeBatch(opts: WriteBatchOptions = {}): Promise<WriteBat
       seo_keywords: data.seo_keywords,
       seo_description: data.seo_description,
       body,
-      author: "找真空行业观察",
+      author: `${SITE.name}编辑`,
       source: c.source_name,
       source_url: c.url,
       material_published_at: c.published_at,
@@ -262,7 +263,7 @@ export async function runForgeWrite(): Promise<WriteBatchResult> {
   return writeBatch({ limit: Number.isInteger(limit) && limit >= 1 ? limit : 50 });
 }
 
-// ── 技术文档线（批次 F4）：/tech 长青内容，锚定找真空产品库 ─────────────────────────────
+// ── 技术文档线（批次 F4）：/tech 长青内容，锚定目标站点产品库 ─────────────────────────────
 
 const TECH_SYSTEM = promptText("style-tech");
 export const TECH_PROMPT_VERSION = promptVersion("style-tech", "rules-anti-hallucination");
@@ -388,7 +389,7 @@ export async function writeTechBatch(opts: { kind: TechKind; limit?: number }): 
     const title = data.title;
     const slug = `zzk-tech-${kind}-${createHash("sha256").update(category).digest("hex").slice(0, 8)}`;
     const body = data.sections.map((s) => "<h3>" + s.heading + "</h3>" + s.paragraphs.map((p) => "<p>" + p.trim() + "</p>").join("")).join("\n")
-      + `\n<p><em>本文由找真空内容锻造坊基于找真空产品库在售数据编写 · 供应商标注以产品页为准</em></p>`;
+      + `\n<p><em>本文由${SITE.name}基于站点产品库在售数据编写 · 供应商标注以产品页为准</em></p>`;
 
     await sql`INSERT INTO article_writes (article_id, status, genre, category, title, slug, summary, seo_title, seo_keywords, seo_description, body, prompt_version)
       VALUES (${"tech-" + kind + "-" + createHash("sha256").update(category).digest("hex").slice(0, 12)}, 'written', ${kind}, ${category}, ${title}, ${slug}, ${data.summary}, ${data.seo_title}, ${data.seo_keywords}, ${data.seo_description}, ${body}, ${TECH_PROMPT_VERSION})`;
@@ -404,8 +405,8 @@ export async function writeTechBatch(opts: { kind: TechKind; limit?: number }): 
       seo_keywords: data.seo_keywords,
       seo_description: data.seo_description,
       body,
-      author: "找真空研究院",
-      source: "找真空产品库",
+      author: `${SITE.name}研究院`,
+      source: "站点产品库",
     });
     result.written++;
     result.titles.push({ slug, title });
@@ -560,7 +561,7 @@ export async function writeWeeklyReport(opts: { now?: Date } = {}): Promise<Writ
   const body = `<p>${data.lead}</p>`
     + data.segments.map((s) => `<h3>${s.heading}</h3><p>${s.text}</p>`).join("\n")
     + `\n<h3>本期收录（${live.length} 篇）</h3><ul>${items}</ul>`
-    + `\n<p><em>找真空行业观察 · 每周一出刊，覆盖上周全部成稿</em></p>`;
+    + `\n<p><em>${SITE.name}编辑 · 每周一出刊，覆盖上周全部成稿</em></p>`;
 
   const title = data.title;
   await sql`INSERT INTO article_writes (article_id, status, genre, category, title, slug, summary, seo_title, seo_keywords, seo_description, body, prompt_version)
@@ -579,8 +580,8 @@ export async function writeWeeklyReport(opts: { now?: Date } = {}): Promise<Writ
     seo_keywords: data.seo_keywords,
     seo_description: data.seo_description,
     body,
-    author: "找真空行业观察",
-    source: "找真空内容锻造坊",
+    author: `${SITE.name}编辑`,
+    source: SITE.name,
   }]);
   return result;
 }

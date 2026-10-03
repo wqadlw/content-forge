@@ -25,7 +25,7 @@ export const CAPABILITIES = {
   digest: { label: "事件综述", env: "DIGEST_MODEL", default: "default", purposes: ["story_digest"] },
   report: { label: "日报、周报、月报", env: "REPORT_MODEL", default: "default", purposes: ["report_lead", "report_daily", "report_weekly", "report_monthly"] },
   translate: { label: "精选全文翻译（含引用帖）", env: "TRANSLATE_MODEL", default: "default", purposes: ["translate_body", "translate_quoted"] },
-  articleWrite: { label: "资讯成稿（按找真空写作模板把真实素材写成整篇资讯）", env: "ARTICLE_WRITE_MODEL", default: "default", purposes: ["article_write", "relevance_check"] },
+  articleWrite: { label: "资讯成稿（按行业文风模板把真实素材写成整篇资讯）", env: "ARTICLE_WRITE_MODEL", default: "default", purposes: ["article_write", "relevance_check"] },
   monitor: { label: "Codex 重置公告识别", env: "MONITOR_MODEL", default: "default", purposes: ["monitor.recognize", "monitor.context"] },
 } satisfies Record<string, Capability>;
 

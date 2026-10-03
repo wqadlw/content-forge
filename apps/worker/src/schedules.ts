@@ -42,11 +42,11 @@ export const SCHEDULES: Scheduled[] = [
   { name: "stories.status", cron: "7 * * * *", run: refreshStoryStatuses },
   { name: "stories.links", cron: "12 * * * *", run: linkRelatedStories },
   { name: "reports.daily", cron: "0 8 * * *", missed: "once", run: () => composeDaily(dueDaily()) },
-  // 内容车间成稿（批次 HS10-F1）：工作日 06:40 自动成稿一批并推送找真空站点（未配置 SITE_IMPORT_* 时只落台账）。
+  // 内容成稿（HS10-F1）：工作日 06:40 自动成稿一批并推送目标站点（未配置 SITE_IMPORT_* 时只落台账）。
   { name: "forge.write", cron: "40 6 * * 1-5", missed: "once", run: () => runForgeWrite() },
   // 技术文档线（批次 F4）：每周三 06:30 三种体裁各成稿一稿（选型指南/维修保养/行业百科 → /tech）。
   { name: "forge.write-tech", cron: "30 6 * * 3", missed: "once", run: () => runForgeTechWrite() },
-  // 周报线（批次 F5）：每周一 07:30 聚合上周成稿出刊 → /news/weekly（找真空站内，SEO 归属主站）。
+  // 周报线（批次 F5）：每周一 07:30 聚合上周成稿出刊 → 你的网站周报栏目。
   { name: "forge.write-weekly", cron: "30 7 * * 1", missed: "once", run: () => writeWeeklyReport() },
   { name: "reports.weekly", cron: "0 10 * * 1", missed: "once", run: () => composeWeekly(dueWeekly()) },
   {
