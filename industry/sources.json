@@ -355,6 +355,99 @@
         "政策",
         "权威"
       ]
+    },
+    {
+      "id": "zyzhan-news",
+      "name": "化工仪器网 · 行业新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.zyzhan.com/news/",
+        "itemSelector": "a[href*=\"/news/detail/\"]",
+        "allowUrlPrefixes": [
+          "https://www.zyzhan.com/news/detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T1_5",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "行业媒体",
+        "仪器"
+      ]
+    },
+    {
+      "id": "hbzhan-news",
+      "name": "环保在线 · 行业新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.hbzhan.com/news/",
+        "itemSelector": "a[href*=\"/news/detail/\"]",
+        "allowUrlPrefixes": [
+          "https://www.hbzhan.com/news/detail/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "行业媒体",
+        "环保"
+      ]
+    },
+    {
+      "id": "kyky-news",
+      "name": "中科科仪 · 动态（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.kyky.com.cn/news/",
+        "itemSelector": "a[href*=\"/content/\"]",
+        "allowUrlPrefixes": [
+          "https://www.kyky.com.cn/content/"
+        ],
+        "detail": true,
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "kyky",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "厂商",
+        "分子泵"
+      ]
+    },
+    {
+      "id": "hdzk-news",
+      "name": "湘潭宏大真空 · 新闻（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.hdzk.com.cn/CorporateNews/list.aspx",
+        "itemSelector": "a[href*=\"CorporateNews\"]",
+        "allowUrlPrefixes": [
+          "http://www.hdzk.com.cn/CorporateNews/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "hdzk",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "厂商",
+        "镀膜"
+      ]
     }
   ]
 }
