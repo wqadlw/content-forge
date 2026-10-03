@@ -20,7 +20,7 @@
       "first_party": true,
       "owner_entity_id": "zhaozhenkong",
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 720,
       "tags": [
         "官方",
         "站内"
@@ -47,7 +47,7 @@
       "first_party": true,
       "owner_entity_id": "zhaozhenkong",
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 720,
       "tags": [
         "官方",
         "站内"
@@ -136,7 +136,7 @@
       "kind": "web_list",
       "config": {
         "url": "https://www.leybold.com/en/news",
-        "itemSelector": "a[href^='/en/news/']",
+        "itemSelector": "a[href^=\"/en/news/\"]",
         "allowUrlPrefixes": [
           "https://www.leybold.com/en/news/"
         ],
@@ -162,7 +162,7 @@
       "name": "Edwards 爱德华 · News（官方）",
       "kind": "web_list",
       "config": {
-        "url": "https://www.edwardsvacuum.com/en-uk/news-and-events",
+        "url": "https://www.edwardsvacuum.com/en-uk/news-and-events.html",
         "itemSelector": "a[href^='/en-uk/news-and-events/']",
         "allowUrlPrefixes": [
           "https://www.edwardsvacuum.com/en-uk/news-and-events/"
