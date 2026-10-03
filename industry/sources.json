@@ -325,6 +325,36 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "rsshub-miit-zcwj",
+      "name": "工信部 · 政策文件（RSSHub）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "http://127.0.0.1:1200/gov/miit/zcwj"
+      },
+      "tier": "T1_5",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "政策",
+        "权威"
+      ]
+    },
+    {
+      "id": "rsshub-miit-zcjd",
+      "name": "工信部 · 政策解读（RSSHub）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "http://127.0.0.1:1200/gov/miit/zcjd"
+      },
+      "tier": "T1_5",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "政策",
+        "权威"
+      ]
     }
   ]
 }
