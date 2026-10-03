@@ -221,42 +221,6 @@
       ]
     },
     {
-      "id": "hbzhan-news",
-      "name": "环保在线 · 行业新闻",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.hbzhan.com/news/",
-        "itemSelector": "a[href*=\"/news/detail/\"]",
-        "allowUrlPrefixes": [
-          "https://www.hbzhan.com/news/detail/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12
-        },
-        "ingestNoiseFilter": {
-          "dropMarkersTitleOnly": [
-            "医药",
-            "新药",
-            "器械",
-            "获批",
-            "基因",
-            "试剂",
-            "试剂盒",
-            "临床",
-            "环保监测",
-            "监测机构"
-          ]
-        }
-      },
-      "tier": "T2",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "行业媒体",
-        "环保"
-      ]
-    },
-    {
       "id": "kyky-news",
       "name": "中科科仪 · 动态（官方）",
       "kind": "web_list",
@@ -377,7 +341,7 @@
     },
     {
       "id": "everblue-news",
-      "name": "Everblue · 应用案例（官方）",
+      "name": "昊青气体装备 · 应用案例（官方）",
       "kind": "web_list",
       "config": {
         "url": "http://everblue-industries.com/newsclass_2/",
@@ -390,9 +354,36 @@
         },
         "egressRoute": "direct"
       },
-      "tier": "T2",
+      "tier": "T1",
       "participation_mode": "editorial",
       "interval_minutes": 720,
+      "tags": [
+        "厂商",
+        "气体装备"
+      ],
+      "first_party": true,
+      "owner_entity_id": "haoqing"
+    },
+    {
+      "id": "haozhizhenkong-news",
+      "name": "昊志机械 · 案例与新闻（官方）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.haozhizhenkong.com/news/",
+        "itemSelector": "a[href^=\"/news/\"]",
+        "allowUrlPrefixes": [
+          "https://www.haozhizhenkong.com/news/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 10
+        },
+        "egressRoute": "direct"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "haozhizhenkong",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
       "tags": [
         "厂商",
         "真空系统"
